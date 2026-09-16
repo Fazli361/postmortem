@@ -1,0 +1,6 @@
+{
+  "name": "SUARA URUSETIA",
+  "description": "Sistem maklum balas post-mortem anonymous urusetia program berasaskan kod akses 4 digit, integrasi live Google Sheets, analisis pintar AI, dan laporan post-mortem.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

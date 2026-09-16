@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Programs collection
+    match /programs/{programId} {
+      // Anyone can read active program details to view info before feedback
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin() && isValidId(programId);
+    }
+
+    // Access Tokens collection
+    // Responders NEVER get direct client read access to token collections to prevent scraping valid codes.
+    // All token validation and one-time consumption is strictly server-orchestrated.
+    match /accessTokens/{tokenId} {
+      allow read, write: if isAdmin() && isValidId(tokenId);
+    }
+
+    // Responses collection
+    // Anonymous feedback responses.
+    // Responders CANNOT read other responses. Responders write only via server-controlled flow.
+    // Admin can read all responses for analysis, but responses contain zero identity or token links.
+    match /responses/{responseId} {
+      allow read: if isAdmin() && isValidId(responseId);
+      // Client writes are blocked; all anonymous submissions must go through the backend validation endpoint
+      allow create: if false;
+      allow update, delete: if isAdmin() && isValidId(responseId);
+    }
+
+    // Analysis reports collection
+    match /analysis/{analysisId} {
+      allow read, write: if isAdmin() && isValidId(analysisId);
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && request.auth.uid == adminId;
+      allow write: if false; // Provisioned via server or root console only
+    }
+  }
+}

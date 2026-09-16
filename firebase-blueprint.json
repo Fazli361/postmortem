@@ -1,0 +1,109 @@
+{
+  "entities": {
+    "Program": {
+      "title": "Program",
+      "description": "Event or program details for post-mortem feedback",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 200 },
+        "date": { "type": "string" },
+        "location": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["Draft", "Active", "Closed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "date", "status", "createdAt"]
+    },
+    "AccessToken": {
+      "title": "AccessToken",
+      "description": "One-time 4-digit access token for anonymous respondent. Strictly detached from response document.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "programId": { "type": "string" },
+        "code": { "type": "string", "pattern": "^[0-9]{4}$" },
+        "status": { "type": "string", "enum": ["UNUSED", "USED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "usedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "programId", "code", "status", "createdAt"]
+    },
+    "Response": {
+      "title": "Response",
+      "description": "Completely anonymous post-mortem response without any user identity, token link, or browser ID.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "programId": { "type": "string" },
+        "rating": { "type": "integer" },
+        "answers": {
+          "type": "object",
+          "properties": {
+            "strengths": { "type": "string", "maxLength": 5000 },
+            "weaknesses": { "type": "string", "maxLength": 5000 },
+            "areasToImprove": { "type": "array", "items": { "type": "string" } },
+            "unresolvedIssues": { "type": "string", "maxLength": 5000 },
+            "blockingIssues": { "type": "string", "maxLength": 5000 },
+            "doDifferently": { "type": "string", "maxLength": 5000 },
+            "changeOneThing": { "type": "string", "maxLength": 5000 },
+            "mustRetain": { "type": "string", "maxLength": 5000 },
+            "additionalComments": { "type": "string", "maxLength": 5000 }
+          },
+          "required": ["strengths", "weaknesses", "areasToImprove"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "programId", "rating", "answers", "createdAt"]
+    },
+    "Analysis": {
+      "title": "Analysis",
+      "description": "AI analysis and post-mortem generated reports",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "programId": { "type": "string" },
+        "overallSummary": { "type": "string" },
+        "sentiment": { "type": "object" },
+        "recurringIssues": { "type": "array" },
+        "actionPlan": { "type": "array" },
+        "generatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "programId", "generatedAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin identity and role authorization",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "superadmin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/programs/{programId}": {
+      "schema": "Program",
+      "description": "Public read for active programs, admin write"
+    },
+    "/accessTokens/{tokenId}": {
+      "schema": "AccessToken",
+      "description": "Restricted token collection. Admin manages, server marks used atomically."
+    },
+    "/responses/{responseId}": {
+      "schema": "Response",
+      "description": "Strictly anonymous feedback. Write via server-validated submission, admin read only."
+    },
+    "/analysis/{analysisId}": {
+      "schema": "Analysis",
+      "description": "AI generated analysis reports. Admin access only."
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Admin access list for authorization check."
+    }
+  }
+}
